@@ -30,7 +30,7 @@ snr = 5.
 lambda2 = 1. / snr ** 2
 stc = apply_inverse(evoked, inverse_operator, lambda2, method=method, pick_ori=None)
 
-stc.plot()
+stc.plot(hemi = 'both',surface = 'white')
 
 W, _ = mne.minimum_norm.inverse.compute_whitener(noise_cov, info)
 
@@ -42,7 +42,7 @@ source,theta = source_localization(evoked,W,0.04,evals_lh,emodes,leadfield)
 stc_1 = stc
 stc_1.data = source
 
-stc_1.plot()
+stc_1.plot(hemi = 'both',surface = 'white')
 
 print("\nPress Enter twice to exit the program.")
 enter_count = 0
