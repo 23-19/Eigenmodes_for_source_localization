@@ -37,7 +37,7 @@ W, _ = mne.minimum_norm.inverse.compute_whitener(noise_cov, info)
 evals_lh, evals_rh,emodes_lh,emodes_rh = calc_eig_from_src(src, 150,cut=True)
 emodes = np.vstack((emodes_lh, emodes_rh))
 
-source,theta = source_localization(evoked,W,0.04,evals_lh,emodes,leadfield)
+source,theta  = source_localization(evoked,W,1e16,evals_lh,evals_rh,emodes_lh,emodes_rh,src,leadfield)
 
 stc_1 = stc
 stc_1.data = source
