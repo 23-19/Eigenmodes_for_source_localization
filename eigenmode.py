@@ -55,7 +55,7 @@ def calc_eig_from_src(src, num_modes,cut=True):
     return evals_lh, evals_rh,emodes_lh,emodes_rh
 
 
-def source_localization(evoked,whitener,Lambda,evals,emodes,leadfield):
+def source_localization(evoked,whitener,Lambda,evals_lh,evals_rh,emodes_lh,emodes_rh,src,leadfield):
     """
     input: evoked_whitened; whitener; Lambda; evals; emodes; leadfield
             lambda : the hyperparameters,The recommended value is 0.04, but it needs to be changed according to the specific conditions of the data set.
@@ -65,19 +65,37 @@ def source_localization(evoked,whitener,Lambda,evals,emodes,leadfield):
     output: ex_data,theta
             ex_data : The data of STC class obtained after source localization calculation through eigenmode
             theta :specifically reflects the coefficient distribution and changes of the eigenmode at different time points.
-    """
+    """ 
     # 调整先验
-    evals = (evals - evals.mean()) / evals.std()
-    evals = np.log(1 + np.exp(-evals))
-    lam = np.diag(1/evals)
+    evals_lh = (evals_lh - evals_lh.mean()) / evals_lh.std()
+    evals_lh = np.log(1 + np.exp(-evals_lh))
+    lam_lh = np.diag(evals_lh)
+    
+    evals_rh = (evals_rh - evals_rh.mean()) / evals_rh.std()
+    evals_rh = np.log(1 + np.exp(-evals_rh))
+    lam_rh = np.diag(evals_rh)
+    
+    lam = np.block([[lam_lh, np.zeros((300, 300))],[np.zeros((300, 300)), lam_rh]])
     
     # 白化EEG信号 cov 2293
-    evoked_whitened =  np.sqrt(evoked.nave) * np.dot(whitener, evoked.data)
+    evoked_whitened =  np.sqrt(evoked.nave) * np.dot(W, evoked.data)
     
-    # 白化导联矩阵 
-    G =  whitener @ leadfield @ emodes
-    
-    theta = np.linalg.inv(G.T @ G + Lambda * lam ) @ G.T  @ evoked_whitened
-    ex_data = emodes @ theta
-    return ex_data , theta
 
+    # 白化导联矩阵 
+    G_lh =  whitener @ leadfield[:,:len(src[0]['vertno'])] @ emodes_lh
+    G_rh =  whitener @ leadfield[:,len(src[0]['vertno']):] @ emodes_rh
+    G = np.hstack((G_lh, G_rh))
+    
+    theta = np.linalg.inv(G.T @ G + Lambda * lam * lam ) @ G.T  @ evoked_whitened
+    
+    half_size = theta.shape[0] // 2
+
+    theta_lh = theta[:half_size, :]
+    theta_rh = theta[half_size:, :]
+
+    result_lh = emodes_lh @ theta_lh
+    result_rh = emodes_rh @ theta_rh
+
+    ex_data = np.vstack((result_lh, result_rh))
+    
+    return ex_data, theta 
