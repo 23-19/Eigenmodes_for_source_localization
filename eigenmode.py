@@ -77,7 +77,7 @@ def source_localization(evoked,whitener,Lambda,evals_lh,evals_rh,emodes_lh,emode
     lam = np.block([[lam_lh, np.zeros((lam_lh.shape[0], lam_lh.shape[0]))],[np.zeros((lam_lh.shape[0], lam_lh.shape[0])), lam_rh]])
     
     # 白化EEG信号 cov 2293
-    evoked_whitened =  np.sqrt(evoked.nave) * np.dot(W, evoked.data)
+    evoked_whitened =  np.sqrt(evoked.nave) * np.dot(whitener, evoked.data)
     
 
     # 白化导联矩阵 
